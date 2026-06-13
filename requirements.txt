@@ -2,6 +2,14 @@ numpy>=1.24
 scipy>=1.10
 matplotlib>=3.7
 scikit-learn>=1.3
+pandas>=2.0
+sympy>=1.12
 jupyterlab>=4.0
-# pysindy provides reference SINDy / weak-SINDy implementations to compare against
+nbconvert>=7.0
+ipykernel>=6.0
+# pysindy: vanilla SINDy, weak-form SINDy, and SINDy-PI (implicit/rational)
 pysindy>=1.7
+# cvxpy is required by pysindy's SINDy-PI optimizer
+cvxpy>=1.3
+# DaeFinder: reference implementation of SODAs for DAE discovery
+DaeFinder

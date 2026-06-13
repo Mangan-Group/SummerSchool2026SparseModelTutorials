@@ -1,50 +1,51 @@
 # Sparse Model Tutorials
 
-A 30-minute hands-on demonstration of **sparse optimization methods for data-driven
-discovery of dynamical systems**. The goal is to take noisy time-series (or
-spatiotemporal) data and recover the governing equations using a small, interpretable
-set of active terms.
+A ~30-minute hands-on demonstration of **sparse optimization methods for data-driven
+discovery of differential equations**. The goal: take noisy time-series data and recover the
+governing equations as a small, interpretable set of active terms — finding a sparse $\Xi$ in
+
+$$\dot{X} \;\approx\; \Theta(X)\,\Xi .$$
+
+> Built with [`pysindy`](https://pysindy.readthedocs.io) (SINDy variants) and
+> [`DaeFinder`](https://pypi.org/project/DaeFinder/) (the reference implementation of SODAs).
 
 ## Methods covered
 
 | Method | Idea | Best for |
 | --- | --- | --- |
-| **SINDy** | Sparse regression on a library of candidate functions evaluated at sampled states, using numerically estimated derivatives. | Clean-ish ODE data, fast first pass. |
-| **Weak SINDy (WSINDy)** | Replaces pointwise derivatives with a weak/integral formulation against test functions, dramatically improving noise robustness. | Noisy data, no reliable derivative estimates. |
-| **SODAs** | Sparse Optimization for Differential-equation Approximation — group/structured sparsity for systems where terms are shared across equations. | Coupled systems, structured sparsity. |
-| **IDENT** | Identifying Differential Equations with Numerical Time evolution — recovers PDEs from spatiotemporal data with error-aware term selection. | PDE discovery from grid data. |
-
-> SODAs and IDENT descriptions will be refined as the implementations land.
+| **Vanilla SINDy** | Sparse regression on a polynomial library using numerically estimated derivatives. | Clean polynomial ODEs. |
+| **Weak SINDy** | Integral / weak formulation against test functions — no pointwise derivatives. | High-noise data. |
+| **SINDy-PI** | Implicit formulation that admits **rational** dynamics a polynomial library cannot express. | Rational / implicit systems. |
+| **SODAs** | Discover **algebraic constraints first**, then the dynamics (sequential convex problems). | Differential–algebraic equations (DAEs). |
 
 ## The 30-minute demo arc
 
-1. **(0–5 min) Setup & data** — generate a known system (e.g. Lotka–Volterra, Lorenz), add noise.
-2. **(5–12 min) SINDy** — build the feature library, run STLSQ, recover coefficients.
-3. **(12–18 min) Weak SINDy** — show how the weak form survives noise that breaks vanilla SINDy.
-4. **(18–24 min) SODAs** — structured/group sparsity on a coupled system.
-5. **(24–30 min) IDENT** — PDE recovery from spatiotemporal data, plus a wrap-up comparison.
+| Notebook | Topic | ~min |
+| --- | --- | --- |
+| `00_overview.ipynb` | The sparse-regression idea, the method/benchmark map, import sanity check. | 5 |
+| `01_sindy_intro.ipynb` | Vanilla SINDy on clean Lotka–Volterra; the noise problem appears. | 7 |
+| `02_weak_sindy.ipynb` | Weak SINDy + a noise sweep where vanilla fails and the weak form survives. | 6 |
+| `03_sindy_pi.ipynb` | SINDy-PI on rational Michaelis–Menten kinetics. | 6 |
+| `04_sodas_dae.ipynb` | Full SODAs/DaeFinder flow on Michaelis–Menten as a DAE. | 6 |
+| `05_benchmark_comparison.ipynb` | Head-to-head: noise robustness + the DAE/rational case + summary. | — |
 
 ## Repository layout
 
 ```
 SparseModelTutorials/
 ├── README.md
+├── PROMPT.md             # the refined build-spec the notebooks were generated from
 ├── requirements.txt
 ├── LICENSE
 ├── data/                 # generated / cached datasets (gitignored)
-├── notebooks/            # one notebook per method + a comparison notebook
-│   ├── 00_overview.ipynb
-│   ├── 01_sindy.ipynb
-│   ├── 02_weak_sindy.ipynb
-│   ├── 03_sodas.ipynb
-│   └── 04_ident.ipynb
+├── notebooks/            # 00 … 05, executed with outputs populated
 └── src/
     └── sparse_demos/     # shared, reusable code
-        ├── __init__.py
-        ├── systems.py    # reference dynamical systems & data generation
-        ├── libraries.py  # candidate-function libraries
-        ├── solvers.py    # sparse regression solvers (STLSQ, etc.)
-        └── plotting.py   # shared visualization helpers
+        ├── systems.py    # reference systems + data generation (LV, Lorenz, Michaelis–Menten)
+        ├── libraries.py  # polynomial candidate library
+        ├── solvers.py    # from-scratch STLSQ + model printing
+        ├── metrics.py    # scoring recovered models vs. ground truth
+        └── plotting.py   # trajectory / phase / noise-sweep plots
 ```
 
 ## Getting started
@@ -53,15 +54,21 @@ SparseModelTutorials/
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-jupyter lab
+jupyter lab        # then open notebooks/00_overview.ipynb
 ```
+
+The first code cell of every notebook is a **commented-out** install
+(`# !pip install -r ../requirements.txt`) so nothing reinstalls while you teach.
 
 ## References
 
-- Brunton, Proctor, Kutz (2016), *Discovering governing equations from data: SINDy*. PNAS.
+- Brunton, Proctor & Kutz (2016), *Discovering governing equations from data: SINDy*. PNAS.
 - Messenger & Bortz (2021), *Weak SINDy for PDEs*. J. Comput. Phys.
-- Schaeffer & McCalla (2017), *Sparse model selection via integral terms*.
-- Kang, Liao, Liu (2021), *IDENT: Identifying Differential Equations with Numerical Time evolution*. J. Sci. Comput.
+- Kaheman, Kutz & Brunton (2020), *SINDy-PI: robust algorithm for parallel implicit sparse
+  identification of nonlinear dynamics*. Proc. R. Soc. A.
+- Jayadharan, Catlett, Montanari & Mangan (2026), *SODAs: Sparse Optimization for the
+  Discovery of Differential and Algebraic equations*. Proc. R. Soc. A
+  ([arXiv:2503.05993](https://arxiv.org/abs/2503.05993)).
 
 ## License
 
