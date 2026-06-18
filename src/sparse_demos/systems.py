@@ -40,25 +40,49 @@ SYSTEMS = {
 }
 
 
+def _add_noise(X, noise_pct=0.0, noise_std=0.0, seed=0):
+    """Add Gaussian measurement noise to a clean trajectory ``X`` of shape (n, d).
+
+    Noise is specified as a **percentage of the signal** via ``noise_pct``: the
+    per-variable noise standard deviation is ``(noise_pct / 100) * std(column)``,
+    where ``std`` is taken over the clean trajectory of that state variable. This
+    makes a given noise level comparable across variables with very different
+    scales (e.g. prey vs. predator, or the three Lorenz coordinates).
+
+    ``noise_std`` is kept as an escape hatch for specifying an absolute Gaussian
+    standard deviation directly; if both are given, ``noise_pct`` takes priority.
+    """
+    if noise_pct and noise_pct > 0:
+        rng = np.random.default_rng(seed)
+        scale = (noise_pct / 100.0) * X.std(axis=0, keepdims=True)
+        return X + rng.normal(size=X.shape) * scale
+    if noise_std and noise_std > 0:
+        rng = np.random.default_rng(seed)
+        return X + rng.normal(scale=noise_std, size=X.shape)
+    return X
+
+
 def simulate_mm(t_span=(0.0, 8.0), dt=0.05, s0=1.0, vmax=1.0, km=0.5,
-                noise_std=0.0, seed=0):
+                noise_pct=0.0, noise_std=0.0, seed=0):
     """Integrate reduced Michaelis-Menten kinetics; optionally add Gaussian noise.
 
     Returns ``(t, X)`` with ``X`` columns ``[S, P]``. Ground-truth implicit form:
-    ``(km + S) * dS/dt = -vmax * S``.
+    ``(km + S) * dS/dt = -vmax * S``. Noise is given as a percentage of the
+    signal standard deviation via ``noise_pct`` (see :func:`_add_noise`).
     """
     t_eval = np.arange(t_span[0], t_span[1], dt)
     sol = solve_ivp(michaelis_menten_reduced, t_span, [s0, 0.0], t_eval=t_eval,
                     args=(vmax, km), rtol=1e-9, atol=1e-9)
-    X = sol.y.T
-    if noise_std > 0:
-        rng = np.random.default_rng(seed)
-        X = X + rng.normal(scale=noise_std, size=X.shape)
+    X = _add_noise(sol.y.T, noise_pct=noise_pct, noise_std=noise_std, seed=seed)
     return sol.t, X
 
 
-def simulate(name, t_span=(0.0, 20.0), dt=0.01, x0=None, noise_std=0.0, seed=0, **kwargs):
+def simulate(name, t_span=(0.0, 20.0), dt=0.01, x0=None, noise_pct=0.0,
+             noise_std=0.0, seed=0, **kwargs):
     """Integrate a named reference system and optionally add Gaussian noise.
+
+    Noise is specified as a percentage of the signal standard deviation via
+    ``noise_pct`` (see :func:`_add_noise`).
 
     Returns
     -------
@@ -73,10 +97,6 @@ def simulate(name, t_span=(0.0, 20.0), dt=0.01, x0=None, noise_std=0.0, seed=0, 
     t_eval = np.arange(t_span[0], t_span[1], dt)
     sol = solve_ivp(rhs, t_span, x0, t_eval=t_eval, args=tuple(kwargs.values()),
                     rtol=1e-9, atol=1e-9)
-    X = sol.y.T
-
-    if noise_std > 0:
-        rng = np.random.default_rng(seed)
-        X = X + rng.normal(scale=noise_std, size=X.shape)
+    X = _add_noise(sol.y.T, noise_pct=noise_pct, noise_std=noise_std, seed=seed)
 
     return sol.t, X

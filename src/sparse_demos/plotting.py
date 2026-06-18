@@ -20,19 +20,21 @@ def plot_trajectories(t, X, labels=None, title=None, ax=None):
 
 
 def plot_noise_sweep(noise_levels, errors_by_method, ylabel="relative coefficient error",
-                     title="Noise robustness", ax=None, logy=True):
+                     title="Noise robustness", ax=None, logy=True,
+                     xlabel="noise level (% of signal std)"):
     """Plot a metric vs. noise level, one line per method.
 
     Parameters
     ----------
-    noise_levels : sequence of noise magnitudes (x-axis).
+    noise_levels : sequence of noise magnitudes (x-axis), as a percentage of the
+        signal standard deviation.
     errors_by_method : dict {method_name: sequence of metric values}.
     """
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 4.5))
     for name, errs in errors_by_method.items():
         ax.plot(noise_levels, errs, marker="o", label=name)
-    ax.set_xlabel("noise level")
+    ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     if logy:
         ax.set_yscale("log")
