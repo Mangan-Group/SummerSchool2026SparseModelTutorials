@@ -19,6 +19,29 @@ def plot_trajectories(t, X, labels=None, title=None, ax=None):
     return ax
 
 
+def plot_noise_sweep(noise_levels, errors_by_method, ylabel="relative coefficient error",
+                     title="Noise robustness", ax=None, logy=True):
+    """Plot a metric vs. noise level, one line per method.
+
+    Parameters
+    ----------
+    noise_levels : sequence of noise magnitudes (x-axis).
+    errors_by_method : dict {method_name: sequence of metric values}.
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=(7, 4.5))
+    for name, errs in errors_by_method.items():
+        ax.plot(noise_levels, errs, marker="o", label=name)
+    ax.set_xlabel("noise level")
+    ax.set_ylabel(ylabel)
+    if logy:
+        ax.set_yscale("log")
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    return ax
+
+
 def plot_phase(X, title=None, ax=None):
     """2D phase portrait of the first two state variables."""
     if ax is None:
