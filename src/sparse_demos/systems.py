@@ -22,6 +22,16 @@ def lorenz(t, state, sigma=10.0, rho=28.0, beta=8.0 / 3.0):
     return [sigma * (y - x), x * (rho - z) - y, x * y - beta * z]
 
 
+def van_der_pol(t, state, mu=5.0):
+    """Van der Pol oscillator. State = [x, y]. Relaxation oscillations for large
+    ``mu`` produce sharp turning points that wreck pointwise derivative estimates.
+
+    x' = y ,   y' = mu (1 - x^2) y - x  =  -x + mu y - mu x^2 y.
+    """
+    x, y = state
+    return [y, mu * (1.0 - x**2) * y - x]
+
+
 def michaelis_menten_reduced(t, state, vmax=1.0, km=0.5):
     """Reduced (QSSA) Michaelis-Menten kinetics. State = [substrate S, product P].
 
@@ -37,7 +47,28 @@ def michaelis_menten_reduced(t, state, vmax=1.0, km=0.5):
 SYSTEMS = {
     "lotka_volterra": (lotka_volterra, [10.0, 5.0]),
     "lorenz": (lorenz, [-8.0, 8.0, 27.0]),
+    "van_der_pol": (van_der_pol, [2.0, 0.0]),
 }
+
+
+def add_measurement_noise(X, noise_ratio, seed=0, rng=None):
+    """Add i.i.d. Gaussian noise scaled *relative to each state's signal*.
+
+    For column ``d``, the noise standard deviation is
+    ``noise_ratio * RMS(X[:, d])`` (root-mean-square of that component).  This is
+    the signal-relative noise model used in the weak-SINDy literature, where the
+    coefficient error scales with the signal-to-noise ratio -- unlike a fixed
+    absolute ``noise_std``, it stays meaningful across systems with very
+    different amplitudes (e.g. Lorenz's z ~ 24 vs. x ~ 8).
+
+    Returns ``(X_noisy, sigma)`` where ``sigma`` is the per-column noise std.
+    """
+    X = np.asarray(X, dtype=float)
+    rng = np.random.default_rng(seed) if rng is None else rng
+    rms = np.sqrt(np.mean(X**2, axis=0))
+    sigma = noise_ratio * rms
+    X_noisy = X + rng.normal(scale=sigma, size=X.shape)
+    return X_noisy, sigma
 
 
 def simulate_mm(t_span=(0.0, 8.0), dt=0.05, s0=1.0, vmax=1.0, km=0.5,
