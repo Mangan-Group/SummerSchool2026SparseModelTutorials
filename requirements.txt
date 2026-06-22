@@ -1,3 +1,6 @@
+# Tested on CPython 3.10-3.13 (e.g. `python3.12 -m venv .venv && pip install -r requirements.txt`).
+# Note: DaeFinder 0.2.1 needs a small PEP 667 shim on Python 3.13+; notebooks 04 and 05
+# apply it automatically via `sparse_demos.daefinder_compat`.
 numpy>=1.24
 scipy>=1.10
 matplotlib>=3.7
